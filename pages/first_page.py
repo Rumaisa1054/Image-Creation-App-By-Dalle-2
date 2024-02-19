@@ -1,53 +1,47 @@
+import os
 import streamlit as st
+from clarifai.client.model import Model
+from clarifai.client.input import Inputs
 from clarifai.client.auth import create_stub
 from clarifai.client.auth.helper import ClarifaiAuthHelper
 from clarifai.client.user import User
 from clarifai.modules.css import ClarifaiStreamlitCSS
+from clarifai_grpc.channel.clarifai_channel import ClarifaiChannel
+from clarifai_grpc.grpc.api import resources_pb2, service_pb2, service_pb2_grpc
+from clarifai_grpc.grpc.api.status import status_code_pb2
 from google.protobuf import json_format, timestamp_pb2
 
 st.set_page_config(layout="wide")
 ClarifaiStreamlitCSS.insert_default_css(st)
 
-# This must be within the display() function.
-auth = ClarifaiAuthHelper.from_streamlit(st)
-stub = create_stub(auth)
-userDataObject = auth.get_user_app_id_proto()
+st.title("Clarifai NextGen Nexus App")
 
-st.title("Simple example to list inputs")
+def main():
 
-with st.form(key="data-inputs"):
-  mtotal = st.number_input(
-      "Select number of inputs to view in a table:", min_value=5, max_value=100)
-  submitted = st.form_submit_button('Submit')
-
-if submitted:
-  if mtotal is None or mtotal == 0:
-    st.warning("Number of inputs must be provided.")
-    st.stop()
-  else:
-    st.write("Number of inputs in table will be: {}".format(mtotal))
-
-  # Stream inputs from the app. list_inputs give list of dictionaries with inputs and its metadata .
-  input_obj = User(user_id=userDataObject.user_id).app(app_id=userDataObject.app_id).inputs()
-  all_inputs = input_obj.list_inputs()
-
-  #Check for no of inputs in the app and compare it with no of inputs to be displayed.
-  if len(all_inputs) < (mtotal):
-    raise Exception(
-        f"No of inputs is less than {mtotal}. Please add more inputs or reduce the inputs to be displayed !"
+    response = client.images.generate(
+      model="dall-e-2",
+      prompt=promptt,
+      size="1024x1024",
+      quality="standard",
+      n=1,
     )
+    image_url = response.data[0].url
+    return image_url
 
-  else:
-    data = []
-    #added "data_url" which gives the url of the input.
-    for inp in range(mtotal):
-      data.append({
-          "id": all_inputs[inp].id,
-          "data_url": all_inputs[inp].data.image.url,
-          "status": all_inputs[inp].status.description,
-          "created_at": timestamp_pb2.Timestamp.ToDatetime(all_inputs[inp].created_at),
-          "modified_at": timestamp_pb2.Timestamp.ToDatetime(all_inputs[inp].modified_at),
-          "metadata": json_format.MessageToDict(all_inputs[inp].data.metadata),
-      })
-
-  st.dataframe(data)
+if __name__ == '__main__':
+    st.title("Dalle - App")
+    password = ""
+    password = st.text_input("Enter your API-KEY:", type="password")
+    prompt = st.text_input("Enter a prompt:")
+    if st.button("Generate Image"):
+        if(password != ""):
+            client = OpenAI(api_key = password)
+            url = main(prompt)
+            #url = "https://oaidalleapiprodscus.blob.core.windows.net/private/org-yAYPjlgfGXibO0vm2BcHo8Ds/user-Hj9p1PrLa4pl6IqwSOTGUWAC/img-Qn4jGiW847QexJALxgHjbgkE.png?st=2024-02-17T09%3A40%3A49Z&se=2024-02-17T11%3A40%3A49Z&sp=r&sv=2021-08-06&sr=b&rscd=inline&rsct=image/png&skoid=6aaadede-4fb3-4698-a8f6-684d7786b067&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2024-02-17T00%3A12%3A11Z&ske=2024-02-18T00%3A12%3A11Z&sks=b&skv=2021-08-06&sig=0fa7RSvbDqes/Rg5pJfT9LxM/39CoX3%2BqyfTPRgV1OY%3D"
+            try:
+                st.image(url, caption="Image", use_column_width=True)
+            except:
+                st.error("Sorry, no image created for the provided prompt.")
+            st.markdown(url)
+        else:
+            st.markdown("Write Correct API_KEY")
