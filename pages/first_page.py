@@ -16,7 +16,7 @@ ClarifaiStreamlitCSS.insert_default_css(st)
 
 st.title("Clarifai NextGen Nexus App")
 
-def main():
+def main(promptt):
 
     response = client.images.generate(
       model="dall-e-2",
